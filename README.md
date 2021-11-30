@@ -23,7 +23,9 @@ The clockface is deployed, but currently only via a private link as the software
 # License
 All rights reserved. Contact me for usage. 
 # Questions
- Questions may be forwarded to me at my Github profile
-<a href='https://github.com/gshaver82'>gshaver82 Github</a>
-<img src='https://avatars.githubusercontent.com/u/52022933?v=4' alt=Github profile picture width=100>
+ Questions may be forwarded to me at my 
+<a href='https://github.com/gshaver82'>Github profile </a>
+or at my 
 <a href='https://www.linkedin.com/in/gene-shaver-7b574b1a4/'>linkedin</a>
+<br></br>
+<img src='https://avatars.githubusercontent.com/u/52022933?v=4' alt=Github profile picture width=100>
