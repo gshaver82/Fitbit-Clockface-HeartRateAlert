@@ -1,0 +1,15 @@
+<svg viewport-fill="black">
+  <rect width="100%" height="20" x="0" y="0" />
+  <text id="clock-label" class="clock-label">Loading Date</text>
+  <text id="clock-data" class="clock-data">--:--</text>
+  <text id="fbid-label" class="sensor-label">Fitbit ID</text>
+  <text id="fbid-data" class="sensor-data">{ Loading }</text>
+  <text id="hrm-label" class="sensor-label">heart rate</text>
+  <text id="hrm-data" class="sensor-data">{ ... }</text>
+  <text id="charge-label" class="sensor-label">Charging Status</text>
+  <text id="charge-data" class="sensor-data">{ ... }</text>
+  <text id="status-label" class="sensor-label">Monitoring Status</text>
+  <text id="status-data" class="sensor-data">{ ... }</text>
+  <text id="phoneconnstatus-data" class="sensor-data">Not yet connected to phone</text>
+  <text id="restartstatus-data" class="sensor-data">booting up</text>
+</svg>

@@ -1,0 +1,30 @@
+{
+  "devDependencies": {
+    "@fitbit/sdk": "~6.0.0"
+  },
+  "fitbit": {
+    "appUUID": "6b988099-f55c-4862-9d5d-99fc804760d2",
+    "appType": "clockface",
+    "appDisplayName": "CryonicsMonitor",
+    "iconFile": "resources/icon.png",
+    "wipeColor": "#f44336",
+    "requestedPermissions": [
+      "access_heart_rate",
+      "run_background",
+      "access_location",
+      "access_user_profile",
+      "access_internet",
+      "access_activity"
+    ],
+    "buildTargets": [
+      "atlas",
+      "vulcan"
+    ],
+    "i18n": {
+      "en-US": {
+        "name": "CryonicsMonitor"
+      }
+    },
+    "defaultLanguage": "en-US"
+  }
+}
