@@ -87,7 +87,7 @@ peerSocket.addEventListener('message', async function (event) {
   const coords = await getCoords();
   console.log("coords", JSON.stringify(coords));
   var myHeaders = new Headers();
-  myHeaders.append("semisecret", "XXXXXXXXX");
+  myHeaders.append("semisecret", "vegetable");
   myHeaders.append("Content-Type", 'application/json');
   if (settingsStorage.getItem("encodedId")) {
     sendIDtoWatch(settingsStorage.getItem("encodedId"))
