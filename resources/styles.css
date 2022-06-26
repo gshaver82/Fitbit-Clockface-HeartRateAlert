@@ -1,41 +1,23 @@
-.sensor-label {
-  font-family: System-Regular;
-  fill: white;
-  text-anchor: middle;
-  text-length: 32;
-  font-size: 20;
-  x: 50%;
-  y: $;
-}
+.screen { width: 100%; height: 100%; viewport-fill: fb-white; }
 
-.sensor-data {
-  font-family: System-Light;
-  fill: yellow;
-  text-anchor: middle;
-  text-length: 64;
-  font-size: 20;
-  x: 50%;
-  y: $-5;
-}
-.clock-label {
-  font-family: System-Light;
-  fill: fb-aqua;
-  text-anchor: middle;
-  text-length: 32;
-  font-size: 20;
-  x: 50%;
-  y: 15;
-}
-.clock-data {
-  font-family: System-Regular;
-  fill: fb-aqua;
-  text-anchor: middle;
-  text-length: 64;
-  font-size: 80;
-  x: 50%;
-  y: $+40;
-}
-#fbid-label 
-{   
-  y: 105;
-}
+.TOPcontainer { width: 100%; height: 30%; x: 0; y: 0;}
+.BATcontainer { width: 50%; height: 100%; x: 0; y: 0;}
+.SYNCcontainer { width: 50%; height: 100%; x:  $; y: 0; }
+
+.MIDcontainer { width: 100%; height: 40%; x: 0; y: $;}
+.TIMEcontainer { width: 100%; height: 100%; x: 0; y: 0; display : "inline"}
+.INFOcontainer { width: 100%; height: 100%; x: 0; y: 0; display : "none"}
+#INFOTxt1 { x:50%; y: 30; font-size: 32; text-anchor: middle;}
+#INFOTxt2 { x:50%; y: $+4; font-size: 32; text-anchor: middle; }
+#INFOTxt3 { x:50%; y: $+4; font-size: 32; text-anchor: middle; }
+
+.BOTcontainer { width: 100%; height: 31%; x: 0; y: $;}
+.HRcontainer {width: 60%; height: 100%; x: 0; y: 0; }
+.CONNcontainer { width: 40%; height: 100%; x: $; y: 0;}
+
+rect { width: 100%; height: 100%; x: 0; y: 0;  fill:"limegreen" }
+
+text { text-length: 32; }
+
+
+

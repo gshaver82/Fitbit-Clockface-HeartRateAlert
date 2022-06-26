@@ -1,15 +1,56 @@
-<svg viewport-fill="black">
-  <rect width="100%" height="20" x="0" y="0" />
-  <text id="clock-label" class="clock-label">Loading Date</text>
-  <text id="clock-data" class="clock-data">--:--</text>
-  <text id="fbid-label" class="sensor-label">Fitbit ID</text>
-  <text id="fbid-data" class="sensor-data">{ Loading }</text>
-  <text id="hrm-label" class="sensor-label">heart rate</text>
-  <text id="hrm-data" class="sensor-data">{ ... }</text>
-  <text id="charge-label" class="sensor-label">Charging Status</text>
-  <text id="charge-data" class="sensor-data">{ ... }</text>
-  <text id="status-label" class="sensor-label">Monitoring Status</text>
-  <text id="status-data" class="sensor-data">{ ... }</text>
-  <text id="phoneconnstatus-data" class="sensor-data">Not yet connected to phone</text>
-  <text id="restartstatus-data" class="sensor-data">booting up</text>
+<svg class="screen" id="SCREENbutton" >
+  
+  <svg class="TOPcontainer">
+    
+   <svg class="BATcontainer" id="BATbutton" pointer-events="visible">
+     <rect id="BATrect" fill="black"/>     
+     <image id="EnergyOpen" href="img/energyOpen48.png" x="5" y="20" width="48" height="48" fill="gold" display = "inline"/>
+     <image id="EnergyClosed" href="img/energySolid48.png" x="5" y="20" width="48" height="48" fill="gold" display = "none"/>
+     <text id="BATtxt" x="45" y= "60" font-size= "50" text-anchor= "start" font-family= "System-Bold" fill="white" text-length= "3">XX</text>
+   </svg>
+    
+    <svg class="SYNCcontainer" id="SYNCbutton" pointer-events="visible">
+     <rect id="cloud_syncRect" fill="skyblue" />      
+     <image id="cloud_sync" href="img/sync.png" x="5" y="-5" width="64" height="64" display = "inline" />
+      <text id="SYNCTxt" x="10" y= "85" font-size= "40" text-anchor= "start" font-family= "System-Bold" fill="black" text-length= "6">XX min</text>
+   </svg>
+    
+  </svg>
+  
+  <svg class="MIDcontainer" id="MIDbutton" pointer-events="visible">
+    
+    <svg class="TIMEcontainer" id="TIMEcontainer" >
+      <rect fill="black" />
+      <text id="TIMETxt" x="-5" y= "100" font-size= "115" text-anchor= "start" font-family= "System-Bold" fill="fb-aqua" text-length= "5">XX:XX</text>
+      <text id="TIMEDAY" x="275" y= "40" font-size= "30" text-anchor= "start" font-family= "System-Bold" fill="darkcyan" text-length= "3">XXX</text>
+      <text id="TIMEMONTH" x="275" y= "$" font-size= "30" text-anchor= "start" font-family= "System-Bold" fill="darkcyan" text-length= "5">XXX</text>
+      <text id="TIMEDATE" x="275" y= "$" font-size= "30" text-anchor= "start" font-family= "System-Bold" fill="darkcyan" text-length= "5">XX</text>
+      <text id="TIMEORDINAL" x="$" y= "$-45" font-size= "20" text-anchor= "start" font-family= "System-Bold" fill="darkcyan" text-length= "2">th</text>
+    </svg>
+    
+    <svg class="INFOcontainer" id="INFOcontainer" >
+      <rect fill="fb-orange" />
+      <text id="INFOTxt1">--</text>
+      <text id="INFOTxt2">--</text>
+      <text id="INFOTxt3">--</text>
+    </svg>
+    
+   </svg>
+  
+  <svg class="BOTcontainer">
+   <svg class="HRcontainer" id="HRbutton" pointer-events="visible">
+     <rect id="HRrect" fill="black" />
+     <image id="HRPngOpen" href="img/stat_hr_open_48px.png" x="10" y="5" width="48" height="48" fill="red" display = "inline"/>
+     <image id="HRPngclosed" href="img/stat_hr_solid_48px.png" x="10" y="5" width="48" height="48" fill="red" display = "none"/>
+     <text id="HRnum" x="58" y= "75" font-size= "100" text-anchor= "start" font-family= "System-Light" fill="white" text-length= "3">XX</text>
+   </svg>
+    
+    <svg class="CONNcontainer" id="CONNbutton" pointer-events="visible" >
+      <rect id="CONNrect" fill="red" />
+     <image href="img/mobile_phone64.png" x="0" y="0" width="64" height="64" />
+     <image id="CONNX" href="img/x.png" x="55" y="10" width="40" height="40" display = "inline"/>
+     <image id="CONNcheck" href="img/check.png" x="55" y="10" width="40" height="40" display = "none"/>
+    </svg>
+  </svg>
+  
 </svg>
