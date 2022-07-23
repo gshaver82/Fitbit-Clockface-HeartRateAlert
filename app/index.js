@@ -59,7 +59,6 @@ if (fs.existsSync("/private/data/settings.txt")) {
   fs.writeFileSync("settings.txt", settingsOBJ, "json");
   // console.log("settings file created, it is:" + JSON.stringify(readFileSync("settings.txt", "json")));
 }
-
 let disconn = "NoConn:"   + Date.now();
 if (fs.existsSync("/private/data/Disconn.txt")) {
   disconn = readFileSync("Disconn.txt", "utf-8");
@@ -67,7 +66,17 @@ if (fs.existsSync("/private/data/Disconn.txt")) {
   fs.writeFileSync("Disconn.txt", disconn, "utf-8");
   // console.log("Disconn file created, it is:" + readFileSync("Disconn.txt", "utf-8"));
 }
-
+let lastReading = 0;
+let alertSent = true;
+let alertSentTimeStamp=0;
+if (fs.existsSync("/private/data/lastReading.txt")) {
+  lastReading = readFileSync("lastReading.txt", "utf-8");
+  alertSent = false;
+  console.log("lastReading found and read from, result is" , lastReading);
+}else{
+  fs.writeFileSync("lastReading.txt", '0', "utf-8");
+  console.log("lastReading file created, it is:" + readFileSync("lastReading.txt", "utf-8"));
+}
 async function buttonPush(buttonName){
   if(infoState == true){
          vibration.start("bump");
@@ -79,7 +88,12 @@ async function buttonPush(buttonName){
          infoState = false;
      }else{
        if(buttonName == "MIDbutton"){
-          // console.log("mid clicked, doing nothing");        
+          // console.log("mid clicked, doing nothing");    
+  // console.log("lastReading file is: " + readFileSync("lastReading.txt", "utf-8"));    
+  // console.log("lastReading variable is: " + lastReading);   
+  // console.log("alertSentTimeStamp variable is: " + alertSentTimeStamp);    
+  // console.log("alertSent variable is: " + alertSent);        
+         
         }else{
         vibration.start("bump");
         infoState = true; 
@@ -191,8 +205,6 @@ const sensors = [];
 var restartTimeoutID;
 var restartAlertBuzzWaitTimeID;
 
-let alertSent = true;
-let alertSentTimeStamp=0;
 me.appTimeoutEnabled = false; // Disable timeout
 
 peerSocket.addEventListener('message', async function (event) {
@@ -231,7 +243,11 @@ function restart() {
         restartTimeoutID = setTimeout(function () {
             if (peerSocket.readyState === peerSocket.CLOSED) {
                 vibration.stop();
-                me.exit()
+              if (fs.existsSync("/private/data/lastReading.txt")) {
+                fs.writeFileSync("lastReading.txt", lastReading.toString(), "utf-8");
+                }else{console.log("ERROR reading last reading text file")}
+              console.log("lastReading file created, it is:" + readFileSync("lastReading.txt", "utf-8"));
+              me.exit()
             } else if (peerSocket.readyState === peerSocket.OPEN) {
                 // console.log("Not restarting phone Conn was reopened")
                 vibration.stop();
@@ -272,7 +288,7 @@ messaging.peerSocket.onopen = () => {
     settingsOBJ.encodedId === "NOID" ? CONNrect.style.fill = "orange": CONNrect.style.fill = "green"
 };
 
-let lastReading = 0;
+
 if (HeartRateSensor) {
     const hrm = new HeartRateSensor({ frequency: 1 });
     hrm.onreading = function () {
@@ -296,14 +312,14 @@ function checkHRTimes() {
   // console.log("inside HRTimes check", timeDiff)
     if(timeDiff >= 28000 && lastReading !== 0 && !charger.connected && alertSent === false){
          HRrect.style.fill = "orange"
-         if(settingsOBJ.HRtoggle == "true" ){  
+         if(settingsOBJ.HRtoggle == true ){  
             vibration.start("alert");
             setTimeout(() => {vibration.stop()}, 20000);
          }    
          if (peerSocket.readyState === peerSocket.OPEN) {
             peerSocket.send(datenow);
            // console.log("peerSocket.send(datenow);")
-           alertSentTimeStamp = Date.now()
+            alertSentTimeStamp = Date.now()
             alertSent = true;  
           }        
        }else if (timeDiff >= 14000 && timeDiff <= 28000 && lastReading !== 0 && !charger.connected && alertSent === false) {
@@ -327,7 +343,7 @@ function updateChargeState() {
     if (charger.connected) { 
         EnergyClosed.style.display = "inline" ;  
         lastReading = 0;
-        clock.granularity = "minutes";
+        fs.writeFileSync("lastReading.txt", '0', "utf-8");
         vibration.stop();
         sensors.map(sensor => sensor.stop())
         if(HRinterval){clearInterval(HRinterval)}
@@ -344,12 +360,26 @@ function updateChargeState() {
         // console.log("disconn file written to with data:" + disconn )          
         }      
         EnergyClosed.style.display = "none" ; 
+        sensors.map(sensor => sensor.start())
+        setTimeout(function () {
+            HRinterval = setInterval(checkHRTimes, 15000);
+            if (peerSocket.readyState === peerSocket.CLOSED) {
+                restart()
+            } else if (peerSocket.readyState === peerSocket.OPEN) {
+            } else {
+                // console.log("peerSocket ERROR bad")
+            }
+        }, 20000);
+    }
+}
+
         clock.granularity = "minutes";
         clock.ontick = (evt) => {
+          // console.log("clock on tic")
           if (settingsOBJ.encodedId === "NOID"  && peerSocket.readyState === peerSocket.OPEN){
             CONNrect.style.fill = "orange"
-            vibration.start("alert");
-            setTimeout(() => {vibration.stop()}, 10000);
+            // vibration.start("alert");
+            // setTimeout(() => {vibration.stop()}, 10000);
           }else if(settingsOBJ.encodedId != "NOID" && peerSocket.readyState === peerSocket.OPEN){
             CONNrect.style.fill = "green"                   
           }
@@ -386,22 +416,8 @@ function updateChargeState() {
             TIMEDAY.text = DAY_NAMES[evt.date.getDay()] 
             TIMEMONTH.text = MONTH_NAMES[evt.date.getMonth()]
             TIMEDATE.text = date
-            TIMETxt.text = hours + ":" + min
-            
+            TIMETxt.text = hours + ":" + min            
         }
-        sensors.map(sensor => sensor.start())
-        lastReading = 0;
-        setTimeout(function () {
-            HRinterval = setInterval(checkHRTimes, 15000);
-            if (peerSocket.readyState === peerSocket.CLOSED) {
-                restart()
-            } else if (peerSocket.readyState === peerSocket.OPEN) {
-            } else {
-                // console.log("peerSocket ERROR bad")
-            }
-        }, 20000);
-    }
-}
 
 updateChargeState()
 charger.onchange = evt => {

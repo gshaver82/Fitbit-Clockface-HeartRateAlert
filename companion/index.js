@@ -80,7 +80,7 @@ async function alertToServer(alertDateCode){
   const coords = await getCoords();
   // console.log("coords", JSON.stringify(coords));
   var myHeaders = new Headers();
-  myHeaders.append("semisecret", "XXXXXXXXXXXXXXXXXXX");
+  myHeaders.append("semisecret", "XXXXXXXXXXXXXXXXXXXXXXX");
   myHeaders.append("Content-Type", 'application/json');
   if(settingsStorage.getItem("encodedId")){
       // sendIDtoWatch(settingsStorage.getItem("encodedId"))   
