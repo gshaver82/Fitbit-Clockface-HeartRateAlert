@@ -72,10 +72,10 @@ let alertSentTimeStamp=0;
 if (fs.existsSync("/private/data/lastReading.txt")) {
   lastReading = readFileSync("lastReading.txt", "utf-8");
   alertSent = false;
-  console.log("lastReading found and read from, result is" , lastReading);
+  // console.log("lastReading found and read from, result is" , lastReading);
 }else{
   fs.writeFileSync("lastReading.txt", '0', "utf-8");
-  console.log("lastReading file created, it is:" + readFileSync("lastReading.txt", "utf-8"));
+  // console.log("lastReading file created, it is:" + readFileSync("lastReading.txt", "utf-8"));
 }
 async function buttonPush(buttonName){
   if(infoState == true){
@@ -246,7 +246,7 @@ function restart() {
               if (fs.existsSync("/private/data/lastReading.txt")) {
                 fs.writeFileSync("lastReading.txt", lastReading.toString(), "utf-8");
                 }else{console.log("ERROR reading last reading text file")}
-              console.log("lastReading file created, it is:" + readFileSync("lastReading.txt", "utf-8"));
+              // console.log("lastReading file created, it is:" + readFileSync("lastReading.txt", "utf-8"));
               me.exit()
             } else if (peerSocket.readyState === peerSocket.OPEN) {
                 // console.log("Not restarting phone Conn was reopened")
@@ -312,15 +312,17 @@ function checkHRTimes() {
   // console.log("inside HRTimes check", timeDiff)
     if(timeDiff >= 28000 && lastReading !== 0 && !charger.connected && alertSent === false){
          HRrect.style.fill = "orange"
-         if(settingsOBJ.HRtoggle == true ){  
-            vibration.start("alert");
-            setTimeout(() => {vibration.stop()}, 20000);
-         }    
+ 
          if (peerSocket.readyState === peerSocket.OPEN) {
             peerSocket.send(datenow);
-           // console.log("peerSocket.send(datenow);")
             alertSentTimeStamp = Date.now()
             alertSent = true;  
+            if(settingsOBJ.HRtoggle == true ){  
+               vibration.start("alert");
+              setTimeout(() => {vibration.stop()}, 20000);
+            }   
+           // console.log("peerSocket.send(datenow);")
+
           }        
        }else if (timeDiff >= 14000 && timeDiff <= 28000 && lastReading !== 0 && !charger.connected && alertSent === false) {
           HRrect.style.fill = "yellow"
@@ -338,6 +340,24 @@ const DAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 let hours = 0;
 let date = 0;
 let min = 0;
+
+updateChargeState()
+charger.onchange = evt => {
+    INFOcontainer.style.display = "none";
+    TIMEcontainer.style.display = "inline";  
+    INFOTxt1.text = "--"
+    INFOTxt2.text = "--"
+    INFOTxt3.text = "--"    
+    infoState = false;   
+    disconn = "YesConn"
+    fs.writeFileSync("Disconn.txt", disconn, "utf-8");   
+    if (peerSocket.readyState === peerSocket.CLOSED) {
+       disconn = "NoConn:"   + Date.now();
+       fs.writeFileSync("Disconn.txt", disconn, "utf-8");                   
+     } 
+    updateChargeState()
+};
+
 function updateChargeState() {
       // console.log("charge state changed")
     if (charger.connected) { 
@@ -352,13 +372,7 @@ function updateChargeState() {
         BATrect.style.fill = "orange"   
         HRrect.style.fill == "black"
     } else if (!charger.connected) {
-        BATrect.style.fill = "black"  
-        disconn = "NoConn:"   + Date.now();
-        // console.log("writing file with info " + disconn)
-        if (peerSocket.readyState === peerSocket.CLOSED) {
-        fs.writeFileSync("Disconn.txt", disconn, "utf-8");           
-        // console.log("disconn file written to with data:" + disconn )          
-        }      
+        BATrect.style.fill = "black"    
         EnergyClosed.style.display = "none" ; 
         sensors.map(sensor => sensor.start())
         setTimeout(function () {
@@ -419,16 +433,7 @@ function updateChargeState() {
             TIMETxt.text = hours + ":" + min            
         }
 
-updateChargeState()
-charger.onchange = evt => {
-    INFOcontainer.style.display = "none";
-    TIMEcontainer.style.display = "inline";  
-    INFOTxt1.text = "--"
-    INFOTxt2.text = "--"
-    INFOTxt3.text = "--"    
-    infoState = false;
-    updateChargeState()
-};
+
 
 let accelerometer;
 function accelerationMonitor(){
