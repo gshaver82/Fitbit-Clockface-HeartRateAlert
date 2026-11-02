@@ -1,127 +1,283 @@
-// console.log("companion loaded")
-
+import { localStorage } from "local-storage";
 import { geolocation } from "geolocation";
-import * as messaging from "messaging";
 import { peerSocket } from "messaging";
 import { settingsStorage } from "settings";
-// logStorage()
-// function logStorage(){
-//   console.log("looping through local storage")
-//   for (let index = 0; index < settingsStorage.length; index++) {
-//        console.log(" index----" + index + " key---" + settingsStorage.key(index) + " data---" + settingsStorage.getItem(settingsStorage.key(index)))
-//     // if(settingsStorage.key(index) == "syncBuzzDelay"){
-//     //   let temp = JSON.parse(settingsStorage.getItem("syncBuzzDelay"))
-//     //   console.log("temp", JSON.stringify(temp.values[0].value)) 
-//     // }
-//   }
-// }
-messaging.peerSocket.onopen = () => { storeData();};
-settingsStorage.onchange = evt => {
-  // console.log("inside settingsStorage.onchange")
-    storeData()
-};
-function storeData(){  
-  if(settingsStorage.getItem("oauth")){
-    const data = JSON.parse(settingsStorage.getItem("oauth"))
-    settingsStorage.setItem("encodedId", data.user_id);
-  } 
-  sendSettingsData()  
-  // logStorage()
+import { me as companion } from "companion";
+
+
+const SERVER_URL = "https://cryonics-member-response-info.herokuapp.com";
+
+const PAIR_URL = SERVER_URL + "/cApi/device/pair";
+const ALERT_URL = SERVER_URL + "/cApi/device";
+
+const TOKEN_KEY = "cmr_device_token";
+const DISPLAY_ID_KEY = "cmr_display_id";
+
+
+
+function getDeviceToken() { return localStorage.getItem(TOKEN_KEY); }
+
+function getDisplayId() { return localStorage.getItem(DISPLAY_ID_KEY); }
+
+function saveDeviceCredentials(token, displayId) {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(DISPLAY_ID_KEY, displayId);
 }
-function sendSettingsData(){ 
-   let settingsOBJ={}
-  settingsOBJ.encodedId =  settingsStorage.getItem("encodedId") ? settingsStorage.getItem("encodedId") : "NOID"
-  let temp = JSON.parse(settingsStorage.getItem("connBuzzDelay"))
-  settingsOBJ.connBuzzDelay = temp?.values[0].value ? temp?.values[0].value : 4
-  temp = JSON.parse(settingsStorage.getItem("syncBuzzDelay"))
-  settingsOBJ.syncBuzzDelay =  temp?.values[0].value ? temp?.values[0].value : 0  
-  settingsOBJ.HRtoggle = JSON.parse(settingsStorage.getItem("HRtoggle")) ? JSON.parse(settingsStorage.getItem("HRtoggle")) : false
-  
-  
- console.log("APP settingsOBJ", JSON.stringify(settingsOBJ))
+
+function clearDeviceCredentials() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(DISPLAY_ID_KEY);
+}
+
+
+function getSetting(key) {
+  const raw = settingsStorage.getItem(key);
+  if (raw == null) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    return raw;
+  }
+}
+function getPairingCode() {
+  const setting = getSetting("pairingCode");
+  if (!setting) return "";
+  if (typeof setting === "object") { return String(setting.name || "").trim(); }
+  return String(setting).trim();
+}
+
+let pairingInProgress = false;
+
+async function pairDevice() {
+  if (pairingInProgress) return;
+  const pairingCode = getPairingCode();
+
+  if (!pairingCode) return;
+  if (!/^[0-9]{6}$/.test(pairingCode)) {
+    console.log("Pairing code must contain 6 digits.");
+    return;
+  }
+  pairingInProgress = true;
+  try {
+    const response = await fetch(PAIR_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        pairingCode: pairingCode
+      })
+    });
+
+    if (!response.ok) {
+      console.log(
+        "Pairing failed. HTTP status:",
+        response.status
+      );
+      return;
+    }
+
+    const data = await response.json();
+
+    // Expected server response:
+    // {
+    //   "deviceToken": "...",
+    //   "displayId": "..."
+    // }
+
+    if (
+      typeof data.deviceToken !== "string" ||
+      !/^[a-fA-F0-9]{64}$/.test(data.deviceToken) ||
+      typeof data.displayId !== "string" ||
+      !/^[A-Z0-9]{6}$/.test(data.displayId)
+    ) {
+      console.log("Invalid pairing response.");
+      return;
+    }
+
+    // Persist the newly issued credentials.
+    saveDeviceCredentials(
+      data.deviceToken,
+      data.displayId
+    );
+
+    console.log("Device paired successfully.");
+    settingsStorage.removeItem("pairingCode");
+    sendSettingsData();
+  } catch (error) {
+    console.log("Pairing request failed.");
+  } finally { pairingInProgress = false; }
+}
+function sendSettingsData() {
+  const settingsOBJ = {};
+
+  settingsOBJ.displayId = getDisplayId() || "NO ID";
+
+  const connBuzz = getSetting("connBuzzDelay");
+
+  settingsOBJ.connBuzzDelay =
+    connBuzz && connBuzz.values && connBuzz.values[0]
+      ? connBuzz.values[0].value
+      : "4";
+  settingsOBJ.HRtoggle = getSetting("HRtoggle") === true;
+
+
   if (peerSocket.readyState === peerSocket.OPEN) {
-    peerSocket.send(settingsOBJ); 
-  } else{
-    console.log("settingsOBJ not sent?") 
-    setTimeout(() => {
-      console.log("re attempting to send settingsOBJ")
-      if (peerSocket.readyState === peerSocket.OPEN) {
-          peerSocket.send(settingsOBJ); 
-       }
-    }, 1000);
+    try {
+      peerSocket.send(settingsOBJ);
+    } catch (error) {
+      console.log("Unable to send watch settings.");
+    }
+  } else {
+    console.log("Watch not connected. Settings pending.");
   }
 }
 
-
-const getCoords = async () => {
-  // console.log("starting to get geolocation")
-  try{
-    const pos = await new Promise((resolve, reject) => {
-          geolocation.getCurrentPosition(resolve, reject, {timeout: 15000});
-        });    
-        return {
-          long: pos.coords.longitude,
-          lat: pos.coords.latitude,
-        };
-  }catch (error) {
-  console.log(error);
-  }
+peerSocket.onopen = () => {
+  console.log("Watch connected.");
+  sendSettingsData();
 };
 
- 
-peerSocket.addEventListener('message', async function (event) {
-  console.log('Message from watch --- ', event.data);
-  alertToServer(event.data)
+settingsStorage.onchange = (event) => {
+  if (event.key === "pairingCode") {
+    if (getPairingCode()) {
+      pairDevice();
+    }
+    return;
+  }
+
+  if (
+    event.key === "connBuzzDelay" ||
+    event.key === "HRtoggle"
+  ) {
+    sendSettingsData();
+  }
+};
+async function getCoords() {
+  try {
+    const pos = await new Promise((resolve, reject) => {
+      geolocation.getCurrentPosition(
+        resolve,
+        reject,
+        { timeout: 15000 }
+      );
+    });
+
+    return {
+      lat: pos.coords.latitude,
+      long: pos.coords.longitude
+    };
+
+  } catch (error) {
+    console.log("GPS location unavailable.");
+    return null;
+  }
+}
+
+peerSocket.addEventListener("message", (event) => {
+  console.log("Message received from watch.");
+
+  alertToServer(event.data);
 });
 
+async function alertToServer(alertDateCode) {
+  const deviceToken = getDeviceToken();
 
-async function alertToServer(alertDateCode){
-    // logStorage()
+  if (!deviceToken) {
+    console.log(
+      "CRITICAL: No device token. Alert cannot be authenticated."
+    );
+    return;
+  }
+
   const coords = await getCoords();
-  // console.log("coords", JSON.stringify(coords));
-  var myHeaders = new Headers();
-  myHeaders.append("semisecret", "XXXXXXXXXXXXXXXXXXXXXXX");
-  myHeaders.append("Content-Type", 'application/json');
-  if(settingsStorage.getItem("encodedId")){
-      // sendIDtoWatch(settingsStorage.getItem("encodedId"))   
-      let fBwatchObject = {
-                      user_id: settingsStorage.getItem("encodedId"),
-                      newArrayEntry:{
-                       date: alertDateCode,
-                    activeState: true,
-                   }
-                  }
-     if(coords && coords.lat && coords.long){
-        fBwatchObject.newArrayEntry.lat = coords.lat
-       fBwatchObject.newArrayEntry.long = coords.long
-        }
-    console.log ("JSON.stringify(fBwatchObject)", JSON.stringify(fBwatchObject))
-  var requestOptions = {
-    method: 'PUT',
-    headers: myHeaders,
-    body: JSON.stringify(fBwatchObject),
-    redirect: 'follow'
+
+  const alertObject = {
+    newArrayEntry: {
+      date: alertDateCode,
+      activeState: true
+    }
   };
-fetch("https://cryonics-member-response-info.herokuapp.com/cApi/device", requestOptions)
-  .then(response => response.text())
-  .then(result => console.log(result))
-  .catch(error => console.log('error', error));
-     }else {
-       console.log("ERROR No ID, cant send alert to server") 
-     } 
+
+  // Coordinates are only included when available.
+  if (
+    coords &&
+    Number.isFinite(coords.lat) &&
+    Number.isFinite(coords.long)
+  ) {
+    alertObject.newArrayEntry.lat = coords.lat;
+    alertObject.newArrayEntry.long = coords.long;
+  }
+
+  // The server identifies the user from the token.
+  // No user_id is required in the alert body.
+
+  try {
+    const response = await fetch(ALERT_URL, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + deviceToken
+      },
+      body: JSON.stringify(alertObject)
+    });
+
+    if (response.status === 401 ||
+      response.status === 403) {
+      console.log(
+        "CRITICAL: Device authorization rejected."
+      );
+
+      return;
+    }
+
+    if (!response.ok) {
+      console.log(
+        "Emergency alert failed. HTTP status:",
+        response.status
+      );
+      return;
+    }
+
+    console.log(
+      "Emergency alert acknowledged by server."
+    );
+
+  } catch (error) {
+    console.log(
+      "CRITICAL: Emergency alert network failure."
+    );
+  }
 }
 
-import { me as companion } from "companion";
 if (!companion.permissions.granted("run_background")) {
-  console.warn("We're not allowed to access to run in the background!");
+  console.warn("Background permission not granted!");
 }
+
 companion.wakeInterval = 301000;
-// Listen for the event
-companion.addEventListener("wakeinterval", doThis);
-function doThis() {
-  console.log("COMP Wake interval happened!");
-}
-// Event happens if the companion is launched and has been asleep
+
+companion.addEventListener("wakeinterval", () => {
+  console.log("Companion wake interval happened.");
+});
+
 if (companion.launchReasons.wokenUp) {
-  console.log("COMP woken up");
+  console.log("Companion woken from background.");
 }
+
+function initializeCompanion() {
+
+  if (getDeviceToken()) {
+    console.log("Existing device token found.");
+  } else {
+    console.log("Device not paired.");
+  }
+
+  if (getPairingCode()) {
+    pairDevice();
+  }
+
+  sendSettingsData();
+}
+
+initializeCompanion();
+
